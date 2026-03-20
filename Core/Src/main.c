@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -48,7 +49,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+#define RX_BUF_SIZE 50            // 缓冲区大一点防止溢出
+uint8_t rx_buffer[RX_BUF_SIZE];   // DMA 接收阵列
+int16_t target_center_x = 0;      // 目标中心点 X
+int16_t screen_width = 640;       // K230 设置的分辨率宽度
+float vision_error = 0;           // 传给 PID 的偏差值
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,14 +105,18 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   uint32_t last_tick = 0;
-  MoveManager_Init();
+  // MoveManager_Init();
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rx_buffer, RX_BUF_SIZE);
+  huart1.hdmarx->Instance->CCR &= ~DMA_CCR_HTIE;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -119,9 +128,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     if (timerMillis - last_tick >= 1000) {
-      printf("%d\n", timerMillis);
-      printf("L\ndeg:%d\npwm:%d\nR\ndeg:%d\npwm:%d\n", (int32_t)leftMotorDeg, leftMotorPwm,
-        (int32_t)rightMotorDeg, rightMotorPwm);
+      // printf("L\ndeg:%d\npwm:%d\nR\ndeg:%d\npwm:%d\n", (int32_t)leftMotorDeg, leftMotorPwm,
+      //   (int32_t)rightMotorDeg, rightMotorPwm);
+      printf("target_center_x: %d\n", target_center_x);
       last_tick += 1000;
     }
   }
@@ -175,6 +184,38 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
     MoveManager_Update();
   }
 }
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+  if (huart->Instance == USART1)
+  {
+    // 1. 遍历缓冲区寻找帧头（防止数据错位）
+    for (int i = 0; i < (Size - 5); i++)
+    {
+      // 假设帧头是 0x55 (具体需根据 YbProtocol 确定)
+      if (rx_buffer[i] == 0x55)
+      {
+        // 2. 解析中心点。K230 发送的是 x1 (左上角) 和 w (宽度)
+        // 中心点 X = x1 + w/2
+        int16_t x1 = (int16_t)(rx_buffer[i+1] << 8 | rx_buffer[i+2]);
+        int16_t w  = (int16_t)(rx_buffer[i+3] << 8 | rx_buffer[i+4]);
+
+        target_center_x = x1 + (w / 2);
+
+        // 3. 计算偏差：偏差 = 目标中心 - 屏幕中心
+        // 结果范围大约在 -320 到 320 之间
+        vision_error = (float)(target_center_x - (screen_width / 2));
+
+        break; // 找到一帧就退出循环
+      }
+    }
+
+    // 4. 重新开启 DMA 接收
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rx_buffer, RX_BUF_SIZE);
+    huart1.hdmarx->Instance->CCR &= ~DMA_CCR_HTIE;
+  }
+}
+
 
 /* USER CODE END 4 */
 
