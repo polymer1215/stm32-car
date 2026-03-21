@@ -9,14 +9,13 @@ public:
     StateInit(MoveManager* mgr) : BotState(mgr) {}
     void init() override {}
     void loop() override {
-        manager->changeState(State::FOLLOW_HAND);
+        manager->changeState(State::TEST);
     }
 };
 
 MoveManager::MoveManager() {
     allMotorInit();
-    enablePid();
-    
+
     // Initialize states
     states[static_cast<int>(State::INIT)] = new StateInit(this);
     states[static_cast<int>(State::TEST)] = new StateTest(this);

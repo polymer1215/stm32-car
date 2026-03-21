@@ -3,7 +3,7 @@
 //
 
 #ifndef MOTOR_H
-#define MOTOR_Ho
+#define MOTOR_H
 
 #ifdef __cplusplus
 extern "C" {

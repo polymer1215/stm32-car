@@ -13,5 +13,6 @@ public:
     StateTest(MoveManager* mgr);
     void init() override;
     void loop() override;
+    void exit() override;
 };
 #endif

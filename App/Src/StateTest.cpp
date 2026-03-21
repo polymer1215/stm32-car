@@ -3,12 +3,14 @@
 //
 
 #include "../Inc/StateTest.h"
+#include "../../Bsp/Inc/motor.h"
 
 StateTest::StateTest(MoveManager* mgr) : BotState(mgr), stateStep(1) {}
 
 void StateTest::init()
 {
     manager->stopAll();
+    enablePid();
 }
 
 void StateTest::loop()
@@ -17,9 +19,9 @@ void StateTest::loop()
         return;
     }
 
-    if (stateStep > 6) {
-        stateStep = 1;
-    }
+    // if (stateStep > 6) {
+    //     stateStep = 1;
+    // }
 
     switch (stateStep) {
     case 1:
@@ -40,8 +42,15 @@ void StateTest::loop()
     case 6:
         manager->executeMove(MoveState::STOP, 0, 1000);
         break;
+    case 7:
+        manager->changeState(State::FOLLOW_HAND);
     default:
         break;
     }
     stateStep++;
+}
+
+void StateTest::exit()
+{
+    disablePid();
 }
