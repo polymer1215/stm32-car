@@ -9,7 +9,7 @@ public:
     StateInit(MoveManager* mgr) : BotState(mgr) {}
     void init() override {}
     void loop() override {
-        manager->changeState(State::FOLLOW_HAND         );
+        manager->changeState(State::TEST);
     }
 };
 

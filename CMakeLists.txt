@@ -47,6 +47,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         App/Src/StateTest.cpp
         App/Inc/StateFollowHand.h
         App/Src/StateFollowHand.cpp
+        App/Inc/pid.h
+        App/Src/pid.c
 )
 
 # Add STM32CubeMX generated sources

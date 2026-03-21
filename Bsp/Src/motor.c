@@ -3,6 +3,7 @@
 //
 
 #include "../Inc/motor.h"
+#include "../../App/Inc/pid.h"
 #include "tim.h"
 
 const uint32_t RATIO = 20; // motor decceration ratio
@@ -11,13 +12,12 @@ const uint32_t LINE = 13;
 const uint32_t REV = LINE * 4 * RATIO;
 const int32_t MAX_pwm = 3599;
 
-const int32_t KP = 5000;
-// const int32_t KI = 500;
-const int32_t KI = 1550;
-const int32_t KD = 200;
+const float KP = 5.0;
+const float KI = 1.55;
+const float KD = 0.2;
 
-PidTypeDef pid_left;
-PidTypeDef pid_right;
+PID_Instance pid_left;
+PID_Instance pid_right;
 
 uint8_t pidEnabled = 0;
 int32_t leftMotorDegTarget = 0;
@@ -36,12 +36,9 @@ void allMotorInit() {
     HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
     HAL_TIM_Base_Start_IT(&htim4);
 
-    pid_left.Kp = KP;  pid_left.Ki = KI;  pid_left.Kd = KD;
-    pid_left.out_max = 3599;
-    pid_left.integral_max = 1000;
-    pid_right = pid_left;
-
     pidEnabled = 0;
+    PID_Init(&pid_left, PID_MODE_POSITIONAL, KP, KI, KD, 3599, -3599);
+    PID_Init(&pid_right, PID_MODE_POSITIONAL, KP, KI, KD, 3599, -3599);
 }
 
 void enablePid() {
@@ -104,7 +101,6 @@ void updateRightMotorSpeed() {
 
     // float rpm = (float)count * 60.0f * (float)FREQUENCY / (float)REV;
     // rightMotorDeg = rpm * 6;
-    // Simplified: deg = count * 6000 * 6 / 1040 = count * 36000 / 1040 = count * 450 / 13
     rightMotorDeg = ((int32_t)count * 450) / 13;
 }
 
@@ -119,37 +115,14 @@ void updateLeftMotorSpeed() {
 
 void rightMotorPid() {
     if (pidEnabled) {
-        int32_t pwm_output = getPidOutput(&pid_right, rightMotorDegTarget, rightMotorDeg);
+        int32_t pwm_output = PID_Compute(&pid_right, rightMotorDegTarget, rightMotorDeg);
         setRightMotorPwm(pwm_output);
     }
 }
 
 void leftMotorPid() {
     if (pidEnabled) {
-        int32_t pwm_output = getPidOutput(&pid_left, leftMotorDegTarget, leftMotorDeg);
+        int32_t pwm_output = PID_Compute(&pid_left, leftMotorDegTarget, leftMotorDeg);
         setLeftMotorPwm(pwm_output);
     }
-}
-
-int32_t getPidOutput(PidTypeDef* pid, int32_t target, int32_t measure) {
-    pid->target = target;
-    pid->measure = measure;
-    pid->err = pid->target - pid->measure;
-
-    int32_t p_out = pid->Kp * pid->err;
-
-    pid->integral += pid->err;
-    if (pid->integral > pid->integral_max) pid->integral = pid->integral_max;
-    if (pid->integral < -pid->integral_max) pid->integral = -pid->integral_max;
-    int32_t i_out = pid->Ki * pid->integral;
-
-    int32_t d_out = pid->Kd * (pid->err - pid->err_last);
-    pid->err_last = pid->err;
-
-    pid->out = (p_out + i_out + d_out) / 1000; // Scaling factor 1000
-
-    if (pid->out > pid->out_max) pid->out = pid->out_max;
-    if (pid->out < -pid->out_max) pid->out = -pid->out_max;
-
-    return pid->out;
 }

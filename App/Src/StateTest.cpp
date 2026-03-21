@@ -19,31 +19,14 @@ void StateTest::loop()
         return;
     }
 
-    // if (stateStep > 6) {
-    //     stateStep = 1;
-    // }
+    if (stateStep > 1) {
+        stateStep = 1;
+    }
 
     switch (stateStep) {
     case 1:
-        manager->executeMove(MoveState::STOP, 0, 1000);
+        manager->executeMove(MoveState::TURN_LEFT, 1000, 0);
         break;
-    case 2:
-        manager->executeMove(MoveState::TURN_LEFT, 1000, 1000);
-        break;
-    case 3:
-        manager->executeMove(MoveState::FORWARD, 1000, 1000);
-        break;
-    case 4:
-        manager->executeMove(MoveState::TURN_RIGHT, 1000, 1000);
-        break;
-    case 5:
-        manager->executeMove(MoveState::BACKWARD, 1000, 1000);
-        break;
-    case 6:
-        manager->executeMove(MoveState::STOP, 0, 1000);
-        break;
-    case 7:
-        manager->changeState(State::FOLLOW_HAND);
     default:
         break;
     }
