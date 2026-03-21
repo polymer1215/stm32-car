@@ -127,9 +127,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     if (timerMillis - last_tick >= 1000) {
-      // printf("L\ndeg:%d\npwm:%d\nR\ndeg:%d\npwm:%d\n", (int32_t)leftMotorDeg, leftMotorPwm,
-      //   (int32_t)rightMotorDeg, rightMotorPwm);
-      printf("target_center_x: %d\n", K230_data.x);
+      printf("L\ndeg:%d\npwm:%d\nR\ndeg:%d\npwm:%d\n", (int32_t)leftMotorDeg, leftMotorPwm,
+        (int32_t)rightMotorDeg, rightMotorPwm);
+      // printf("target_center_x: %d\n", K230_data.x);
       last_tick += 1000;
     }
   }

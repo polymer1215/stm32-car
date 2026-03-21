@@ -13,7 +13,7 @@
 typedef struct K230Data
 {
     uint8_t RxBuffer[PTO_BUF_LEN_MAX];
-    float vision_error;
+    int16_t vision_error;
     int16_t x;
     int16_t y;
     int16_t w;

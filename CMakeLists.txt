@@ -43,6 +43,12 @@ add_executable(${CMAKE_PROJECT_NAME}
         App/Src/MoveManager_C.cpp
         Bsp/Inc/parseK230.h
         Bsp/Src/parseK230.c
+        App/Inc/StateTest.h
+        App/Src/StateTest.cpp
+        App/Inc/StateFollowHand.h
+        App/Src/StateFollowHand.cpp
+        App/Inc/pid.h
+        App/Src/pid.c
 )
 
 # Add STM32CubeMX generated sources

@@ -3,7 +3,7 @@
 //
 
 #ifndef MOTOR_H
-#define MOTOR_Ho
+#define MOTOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,22 +11,8 @@ extern "C" {
 
 #include <stdint.h>
 
-typedef struct PidTypeDef {
-    float Kp;
-    float Ki;
-    float Kd;
-    float target;
-    float measure;
-    float err;
-    float err_last;
-    float integral;
-    float out_max;      // 输出限幅
-    float integral_max; // 积分限幅（抗饱和）
-    float out;
-} PidTypeDef;
-
-extern volatile float leftMotorDeg;
-extern volatile float rightMotorDeg;
+extern volatile int32_t leftMotorDeg;
+extern volatile int32_t rightMotorDeg;
 extern uint8_t pidEnabled;
 
 extern volatile int32_t leftMotorPwm;
@@ -36,8 +22,8 @@ void allMotorInit();
 void enablePid();
 void disablePid();
 
-void setLeftMotorDeg(float deg);
-void setRightMotorDeg(float deg);
+void setLeftMotorDeg(int32_t deg);
+void setRightMotorDeg(int32_t deg);
 
 void updateAllMotor();
 void updateRightMotorSpeed();
@@ -48,7 +34,6 @@ void leftMotorPid();
 
 void setLeftMotorPwm(int32_t pwm);
 void setRightMotorPwm(int32_t pwm);
-float getPidOutput(PidTypeDef* pid, float target, float measure);
 
 #ifdef __cplusplus
 }

@@ -1,34 +1,75 @@
 #include "../Inc/MoveManager.h"
 #include "../../Bsp/Inc/timer.h"
-#include "../../Bsp/Inc/parseK230.h"
+
+#include "../Inc/StateTest.h"
+#include "../Inc/StateFollowHand.h"
+
+class StateInit : public BotState {
+public:
+    StateInit(MoveManager* mgr) : BotState(mgr) {}
+    void init() override {}
+    void loop() override {
+        manager->changeState(State::TEST);
+    }
+};
 
 MoveManager::MoveManager() {
-    allMotorInit(); //
-    enablePid();
-    state = State::INIT;
-    moveState = MoveState::FINISHED;
+    allMotorInit();
+
+    // Initialize states
+    states[static_cast<int>(State::INIT)] = new StateInit(this);
+    states[static_cast<int>(State::TEST)] = new StateTest(this);
+    states[static_cast<int>(State::FOLLOW_HAND)] = new StateFollowHand(this);
+
+    currentState = states[static_cast<int>(State::INIT)];
+    
+    // Initial parameters
+    isActionActive = false;
     startTime = 0;
     actionDuration = 0;
-    isActionPulse = false;
-    stateStep = 1;
-    isTimeMode = false;
+    moveState = MoveState::FINISHED;
+    
+    if (currentState) currentState->init();
 }
 
 MoveManager::~MoveManager() {
+    for (int i = 0; i < static_cast<int>(State::COUNT); i++) {
+        if (states[i]) {
+            delete states[i];
+            states[i] = nullptr;
+        }
+    }
 }
 
-
-void MoveManager::executeMove(MoveState nextMoveState, uint16_t speed, uint32_t durationMs) {
-    if (isTimeMode)
-    {
-        if (moveState != MoveState::FINISHED) {
-            return;
+void MoveManager::updateState() {
+    if (isActionActive) {
+        if (timerMillis - startTime >= actionDuration) {
+            stopAll();
         }
-        actionDuration = durationMs;
-        startTime = timerMillis;
-        isActionPulse = (durationMs > 0);
     }
+
+    if (currentState) {
+        currentState->loop();
+    }
+}
+
+void MoveManager::changeState(State newState) {
+    if (currentState) {
+        currentState->exit();
+    }
+    
+    currentState = states[static_cast<int>(newState)];
+    
+    if (currentState) {
+        currentState->init();
+    }
+}
+
+void MoveManager::executeMove(MoveState nextMoveState, int32_t speed, uint32_t durationMs) {
     moveState = nextMoveState;
+    actionDuration = durationMs;
+    startTime = timerMillis;
+    isActionActive = (durationMs > 0);
 
     switch (moveState) {
         case MoveState::FORWARD:
@@ -51,105 +92,19 @@ void MoveManager::executeMove(MoveState nextMoveState, uint16_t speed, uint32_t 
             setLeftMotorDeg(0);
             setRightMotorDeg(0);
             break;
-
+        default:
+            break;
     }
 }
 
 void MoveManager::stopAll() {
     moveState = MoveState::FINISHED;
     actionDuration = 0;
-    isActionPulse = false;
+    isActionActive = false;
     setLeftMotorDeg(0);
     setRightMotorDeg(0);
 }
 
-void MoveManager::updateState() {
-    if (isTimeMode && isActionPulse) {
-        if (timerMillis - startTime >= actionDuration) {
-            stopAll();
-            stateStep += 1;
-        }
-    }
-
-    switch (state) {
-        case State::INIT:   updateState_INIT();   break;
-        case State::TEST:   updateState_TEST();   break;
-        case State::U_TURN: updateState_U_TURN(); break;
-        case State::FOLLOW_HAND:
-            updateState_FOLLOW_HAND();
-            break;
-    }
-}
-
-void MoveManager::updateState_INIT() {
-    state = State::FOLLOW_HAND;
-    disablePid();
-}
-
-void MoveManager::updateState_TEST() {
-    if (!isTimeMode) {
-        isTimeMode = true;
-    }
-
-    if (stateStep > 6) {
-        stateStep = 1;
-    }
-    switch (stateStep) {
-        case 1:
-            executeMove(MoveState::STOP, 0, 1000);
-
-        case 2:
-            executeMove(MoveState::TURN_LEFT, 1000, 1000);
-            break;
-
-        case 3:
-            executeMove(MoveState::FORWARD, 1000, 1000);
-            break;
-
-        case 4:
-            executeMove(MoveState::TURN_RIGHT, 1000, 1000);
-            break;
-
-        case 5:
-            executeMove(MoveState::BACKWARD, 1000, 1000);
-            break;
-        case 6:
-            executeMove(MoveState::STOP, 0, 1000);
-
-        default:
-            break;
-    }
-}
-
-void MoveManager::updateState_U_TURN() {
-    if (moveState == MoveState::FINISHED) {
-        executeMove(MoveState::TURN_LEFT, 60, 1200);
-    }
-}
-
-void MoveManager::updateState_FOLLOW_HAND() {
-    if (isTimeMode) {
-        isTimeMode = false;
-    }
-
-    // Test: simulating Pid
-
-    setLeftMotorPwm(0);
-    setRightMotorPwm(0);
-    if (K230_data.isNewCommand)
-    {
-        int16_t err = (int16_t)K230_data.vision_error;
-        if (err < -10) {
-            setLeftMotorPwm(-1200);
-            setRightMotorPwm(1200);
-        } else if (err > 10)
-        {
-            setLeftMotorPwm(1200);
-            setRightMotorPwm(-1200);
-        }
-        K230_data.isNewCommand = 0;
-
-    }
-
-    return;
+bool MoveManager::isActionRunning() const {
+    return isActionActive;
 }
