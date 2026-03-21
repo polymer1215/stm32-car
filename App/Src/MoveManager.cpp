@@ -1,5 +1,6 @@
 #include "../Inc/MoveManager.h"
 #include "../../Bsp/Inc/timer.h"
+#include "../../Bsp/Inc/parseK230.h"
 
 MoveManager::MoveManager() {
     allMotorInit(); //
@@ -18,13 +19,16 @@ MoveManager::~MoveManager() {
 
 
 void MoveManager::executeMove(MoveState nextMoveState, uint16_t speed, uint32_t durationMs) {
-    if (moveState != MoveState::FINISHED) {
-        return;
+    if (isTimeMode)
+    {
+        if (moveState != MoveState::FINISHED) {
+            return;
+        }
+        actionDuration = durationMs;
+        startTime = timerMillis;
+        isActionPulse = (durationMs > 0);
     }
     moveState = nextMoveState;
-    actionDuration = durationMs;
-    startTime = timerMillis;
-    isActionPulse = (durationMs > 0);
 
     switch (moveState) {
         case MoveState::FORWARD:
@@ -67,7 +71,6 @@ void MoveManager::updateState() {
         }
     }
 
-    // 2. 状态机逻辑
     switch (state) {
         case State::INIT:   updateState_INIT();   break;
         case State::TEST:   updateState_TEST();   break;
@@ -79,10 +82,15 @@ void MoveManager::updateState() {
 }
 
 void MoveManager::updateState_INIT() {
-    state = State::TEST;
+    state = State::FOLLOW_HAND;
+    disablePid();
 }
 
 void MoveManager::updateState_TEST() {
+    if (!isTimeMode) {
+        isTimeMode = true;
+    }
+
     if (stateStep > 6) {
         stateStep = 1;
     }
@@ -120,5 +128,28 @@ void MoveManager::updateState_U_TURN() {
 }
 
 void MoveManager::updateState_FOLLOW_HAND() {
+    if (isTimeMode) {
+        isTimeMode = false;
+    }
+
+    // Test: simulating Pid
+
+    setLeftMotorPwm(0);
+    setRightMotorPwm(0);
+    if (K230_data.isNewCommand)
+    {
+        int16_t err = (int16_t)K230_data.vision_error;
+        if (err < -10) {
+            setLeftMotorPwm(-1200);
+            setRightMotorPwm(1200);
+        } else if (err > 10)
+        {
+            setLeftMotorPwm(1200);
+            setRightMotorPwm(-1200);
+        }
+        K230_data.isNewCommand = 0;
+
+    }
+
     return;
 }

@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -25,9 +26,12 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "../../Bsp/Inc/motor.h"
 #include "../../Bsp/Inc/timer.h"
 #include "../../App/Inc/MoveManager_C.h"
+#include "../../Bsp/Inc/parseK230.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,7 +52,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,14 +103,19 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   uint32_t last_tick = 0;
   MoveManager_Init();
+
+  parseK230Init();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -119,9 +127,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     if (timerMillis - last_tick >= 1000) {
-      printf("%d\n", timerMillis);
-      printf("L\ndeg:%d\npwm:%d\nR\ndeg:%d\npwm:%d\n", (int32_t)leftMotorDeg, leftMotorPwm,
-        (int32_t)rightMotorDeg, rightMotorPwm);
+      // printf("L\ndeg:%d\npwm:%d\nR\ndeg:%d\npwm:%d\n", (int32_t)leftMotorDeg, leftMotorPwm,
+      //   (int32_t)rightMotorDeg, rightMotorPwm);
+      printf("target_center_x: %d\n", K230_data.x);
       last_tick += 1000;
     }
   }
@@ -175,6 +183,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
     MoveManager_Update();
   }
 }
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+  if (huart->Instance == USART1) {
+    updateK230Data(huart, Size);
+  }
+}
+
 
 /* USER CODE END 4 */
 
