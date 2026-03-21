@@ -9,22 +9,22 @@ const uint32_t RATIO = 20; // motor decceration ratio
 const uint32_t FREQUENCY = 100; // tim4 interrupt frequency
 const uint32_t LINE = 13;
 const uint32_t REV = LINE * 4 * RATIO;
-const uint32_t MAX_pwm = 3599;
+const int32_t MAX_pwm = 3599;
 
-const float KP = 5.0f;
-// const float KI = 0.5f;
-const float KI = 1.55f;
-const float KD = 0.2f;
+const int32_t KP = 5000;
+// const int32_t KI = 500;
+const int32_t KI = 1550;
+const int32_t KD = 200;
 
 PidTypeDef pid_left;
 PidTypeDef pid_right;
 
 uint8_t pidEnabled = 0;
-float leftMotorDegTarget = 0;
-float rightMotorDegTarget = 0;
+int32_t leftMotorDegTarget = 0;
+int32_t rightMotorDegTarget = 0;
 
-volatile float rightMotorDeg = 0;
-volatile float leftMotorDeg = 0;
+volatile int32_t rightMotorDeg = 0;
+volatile int32_t leftMotorDeg = 0;
 volatile int32_t leftMotorPwm = 0;
 volatile int32_t rightMotorPwm = 0;
 
@@ -52,11 +52,11 @@ void disablePid() {
     pidEnabled = 0;
 }
 
-void setLeftMotorDeg(float deg) {
+void setLeftMotorDeg(int32_t deg) {
     leftMotorDegTarget = deg;
 }
 
-void setRightMotorDeg(float deg) {
+void setRightMotorDeg(int32_t deg) {
     rightMotorDegTarget = deg;
 }
 
@@ -102,48 +102,51 @@ void updateRightMotorSpeed() {
     int16_t count = (int16_t)__HAL_TIM_GET_COUNTER(&htim1);
     __HAL_TIM_SET_COUNTER(&htim1, 0);
 
-    float rpm = (float)count * 60.0f * (float)FREQUENCY / (float)REV;
-    rightMotorDeg = rpm * 6;
+    // float rpm = (float)count * 60.0f * (float)FREQUENCY / (float)REV;
+    // rightMotorDeg = rpm * 6;
+    // Simplified: deg = count * 6000 * 6 / 1040 = count * 36000 / 1040 = count * 450 / 13
+    rightMotorDeg = ((int32_t)count * 450) / 13;
 }
 
 void updateLeftMotorSpeed() {
     int16_t count = (int16_t)__HAL_TIM_GET_COUNTER(&htim2);
     __HAL_TIM_SET_COUNTER(&htim2, 0);
 
-    float rpm = (float)count * 60.0f * (float)FREQUENCY / (float)REV;
-    leftMotorDeg = rpm * 6;
+    // float rpm = (float)count * 60.0f * (float)FREQUENCY / (float)REV;
+    // leftMotorDeg = rpm * 6;
+    leftMotorDeg = ((int32_t)count * 450) / 13;
 }
 
 void rightMotorPid() {
     if (pidEnabled) {
-        float pwm_output = getPidOutput(&pid_right, (float)rightMotorDegTarget, rightMotorDeg);
-        setRightMotorPwm((int32_t)pwm_output);
+        int32_t pwm_output = getPidOutput(&pid_right, rightMotorDegTarget, rightMotorDeg);
+        setRightMotorPwm(pwm_output);
     }
 }
 
 void leftMotorPid() {
     if (pidEnabled) {
-        float pwm_output = getPidOutput(&pid_left, (float)leftMotorDegTarget, leftMotorDeg);
-        setLeftMotorPwm((int32_t)pwm_output);
+        int32_t pwm_output = getPidOutput(&pid_left, leftMotorDegTarget, leftMotorDeg);
+        setLeftMotorPwm(pwm_output);
     }
 }
 
-float getPidOutput(PidTypeDef* pid, float target, float measure) {
+int32_t getPidOutput(PidTypeDef* pid, int32_t target, int32_t measure) {
     pid->target = target;
     pid->measure = measure;
     pid->err = pid->target - pid->measure;
 
-    float p_out = pid->Kp * pid->err;
+    int32_t p_out = pid->Kp * pid->err;
 
     pid->integral += pid->err;
     if (pid->integral > pid->integral_max) pid->integral = pid->integral_max;
     if (pid->integral < -pid->integral_max) pid->integral = -pid->integral_max;
-    float i_out = pid->Ki * pid->integral;
+    int32_t i_out = pid->Ki * pid->integral;
 
-    float d_out = pid->Kd * (pid->err - pid->err_last);
+    int32_t d_out = pid->Kd * (pid->err - pid->err_last);
     pid->err_last = pid->err;
 
-    pid->out = p_out + i_out + d_out;
+    pid->out = (p_out + i_out + d_out) / 1000; // Scaling factor 1000
 
     if (pid->out > pid->out_max) pid->out = pid->out_max;
     if (pid->out < -pid->out_max) pid->out = -pid->out_max;

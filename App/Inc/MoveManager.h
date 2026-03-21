@@ -8,14 +8,14 @@
 // Forward declarations
 class MoveManager;
 
-enum class State {
+enum class State : uint8_t {
     INIT = 0,
     TEST,
     FOLLOW_HAND,
     COUNT
 };
 
-enum class MoveState {
+enum class MoveState : uint8_t {
     STOP,
     FORWARD,
     BACKWARD,
@@ -36,7 +36,7 @@ public:
     void changeState(State newState);
 
     // Helpers for states
-    void executeMove(MoveState nextMoveState, uint16_t speed, uint32_t durationMs);
+    void executeMove(MoveState nextMoveState, int32_t speed, uint32_t durationMs);
     void stopAll();
     bool isActionRunning() const;
 

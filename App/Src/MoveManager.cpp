@@ -9,7 +9,7 @@ public:
     StateInit(MoveManager* mgr) : BotState(mgr) {}
     void init() override {}
     void loop() override {
-        manager->changeState(State::TEST);
+        manager->changeState(State::FOLLOW_HAND         );
     }
 };
 
@@ -65,7 +65,7 @@ void MoveManager::changeState(State newState) {
     }
 }
 
-void MoveManager::executeMove(MoveState nextMoveState, uint16_t speed, uint32_t durationMs) {
+void MoveManager::executeMove(MoveState nextMoveState, int32_t speed, uint32_t durationMs) {
     moveState = nextMoveState;
     actionDuration = durationMs;
     startTime = timerMillis;

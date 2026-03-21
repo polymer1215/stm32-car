@@ -20,7 +20,7 @@ void StateFollowHand::loop() {
 
     if (K230_data.isNewCommand)
     {
-        int16_t err = (int16_t)K230_data.vision_error;
+        int16_t err = K230_data.vision_error;
         if (err < -10) {
             setLeftMotorPwm(-1200);
             setRightMotorPwm(1200);

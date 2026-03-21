@@ -8,7 +8,7 @@
 
 class StateTest : public BotState {
 private:
-    int stateStep;
+    uint8_t stateStep;
 public:
     StateTest(MoveManager* mgr);
     void init() override;

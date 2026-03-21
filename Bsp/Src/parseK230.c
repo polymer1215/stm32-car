@@ -23,7 +23,7 @@ void process_K230_Data(uint8_t *data, uint16_t len) {
     }
 
     uint8_t *tail = NULL;
-    int remaining = (data + len) - header;
+    int16_t remaining = (int16_t)((data + len) - header);
     for (uint16_t i = 0; i < remaining; i++) {
         if (header[i] == '#') {
             tail = &header[i];
@@ -49,7 +49,7 @@ void process_K230_Data(uint8_t *data, uint16_t len) {
     if (token == NULL) {
         return;
     }
-    int pto_len = atoi(token);
+    int16_t pto_len = (int16_t)atoi(token);
 
     if (pto_len != frame_len) {
     }
@@ -60,7 +60,7 @@ void process_K230_Data(uint8_t *data, uint16_t len) {
         return;
     }
 
-    int pto_id = atoi(token);
+    int16_t pto_id = (int16_t)atoi(token);
     if (pto_id != 11) {
         return;
     }
@@ -72,12 +72,12 @@ void process_K230_Data(uint8_t *data, uint16_t len) {
     char *sh = strtok(NULL, ",");
 
     if (sx && sy && sw && sh) {
-        K230_data.x = atoi(sx);
-        K230_data.y = atoi(sy);
-        K230_data.w = atoi(sw);
-        K230_data.h = atoi(sh);
+        K230_data.x = (int16_t)atoi(sx);
+        K230_data.y = (int16_t)atoi(sy);
+        K230_data.w = (int16_t)atoi(sw);
+        K230_data.h = (int16_t)atoi(sh);
 
-        K230_data.vision_error = (float)((K230_data.x + K230_data.w/2) - 320);
+        K230_data.vision_error = (int16_t)((K230_data.x + K230_data.w/2) - 320);
         K230_data.isNewCommand = 1;
 
     } else {
