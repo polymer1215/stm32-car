@@ -2,8 +2,8 @@
 // Created by Junye Peng on 2026/3/21.
 //
 
-#ifndef INC_11_HAND_DETECTION_PY_PARSEK230_H
-#define INC_11_HAND_DETECTION_PY_PARSEK230_H
+#ifndef PARSEK230_H
+#define PARSEK230_H
 
 #include <stdint.h>
 
@@ -27,4 +27,4 @@ void parseK230Init(void);
 
 void updateK230Data(UART_HandleTypeDef *huart, uint16_t Size);
 
-#endif //INC_11_HAND_DETECTION_PY_PARSEK230_H
+#endif //PARSEK230_H

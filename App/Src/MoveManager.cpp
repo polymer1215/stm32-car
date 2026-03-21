@@ -1,5 +1,6 @@
 #include "../Inc/MoveManager.h"
 #include "../../Bsp/Inc/timer.h"
+#include "../../Bsp/Inc/parseK230.h"
 
 MoveManager::MoveManager() {
     allMotorInit(); //
@@ -67,7 +68,6 @@ void MoveManager::updateState() {
         }
     }
 
-    // 2. 状态机逻辑
     switch (state) {
         case State::INIT:   updateState_INIT();   break;
         case State::TEST:   updateState_TEST();   break;
@@ -79,10 +79,14 @@ void MoveManager::updateState() {
 }
 
 void MoveManager::updateState_INIT() {
-    state = State::TEST;
+    state = State::FOLLOW_HAND;
 }
 
 void MoveManager::updateState_TEST() {
+    if (!isTimeMode) {
+        isTimeMode = true;
+    }
+
     if (stateStep > 6) {
         stateStep = 1;
     }
@@ -120,5 +124,22 @@ void MoveManager::updateState_U_TURN() {
 }
 
 void MoveManager::updateState_FOLLOW_HAND() {
+    if (isTimeMode) {
+        isTimeMode = false;
+    }
+
+    // Test: simulating Pid
+
+    int16_t centerX = (K230_data.x + K230_data.w) / 2;
+
+    int16_t err = K230_data.x - centerX;
+
+    if (err < 0) {
+        executeMove(MoveState::TURN_RIGHT, err * 10, 0);
+    } else
+    {
+        executeMove(MoveState::TURN_LEFT, err * 10, 0);
+    }
+
     return;
 }
