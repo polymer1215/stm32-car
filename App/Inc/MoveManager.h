@@ -1,18 +1,18 @@
-//
-// Created by Administrator on 2026/3/20.
-//
-
 #ifndef MOVEMANAGER_H
 #define MOVEMANAGER_H
 
 #include <stdint.h>
 #include "../../Bsp/Inc/motor.h"
+#include "BotState.h"
+
+// Forward declarations
+class MoveManager;
 
 enum class State {
-    INIT,
+    INIT = 0,
     TEST,
-    U_TURN,
     FOLLOW_HAND,
+    COUNT
 };
 
 enum class MoveState {
@@ -24,32 +24,35 @@ enum class MoveState {
     FINISHED,
 };
 
-
 class MoveManager {
 public:
     MoveManager();
     ~MoveManager();
+
+    // Main update loop
     void updateState();
+    
+    // State transitions
+    void changeState(State newState);
 
-private:
-    uint8_t isTimeMode;
-    uint8_t stateStep;
-    State state;
-    MoveState moveState;
-
-    uint32_t startTime;
-    uint32_t actionDuration;
-    bool isActionPulse;
-
-private:
-    void updateState_INIT();
-    void updateState_TEST();
-    void updateState_U_TURN();
-    void updateState_FOLLOW_HAND();
-
-    // 内部使用的动作触发器
+    // Helpers for states
     void executeMove(MoveState nextMoveState, uint16_t speed, uint32_t durationMs);
     void stopAll();
+    bool isActionRunning() const;
+
+private:
+    BotState* currentState;
+    BotState* states[static_cast<int>(State::COUNT)];
+
+    // Timing and movement state
+    bool isActionActive;
+    uint32_t startTime;
+    uint32_t actionDuration;
+    MoveState moveState;
+
+    friend class StateInit;
+    friend class StateTest;
+    friend class StateFollowHand;
 };
 
 #endif //MOVEMANAGER_H
