@@ -180,7 +180,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
   if (htim->Instance == TIM4) {
     updateTimer();
     updateAllMotor();
-    // MoveManager_Update();
+    MoveManager_Update();
   }
 }
 

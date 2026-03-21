@@ -19,13 +19,16 @@ MoveManager::~MoveManager() {
 
 
 void MoveManager::executeMove(MoveState nextMoveState, uint16_t speed, uint32_t durationMs) {
-    if (moveState != MoveState::FINISHED) {
-        return;
+    if (isTimeMode)
+    {
+        if (moveState != MoveState::FINISHED) {
+            return;
+        }
+        actionDuration = durationMs;
+        startTime = timerMillis;
+        isActionPulse = (durationMs > 0);
     }
     moveState = nextMoveState;
-    actionDuration = durationMs;
-    startTime = timerMillis;
-    isActionPulse = (durationMs > 0);
 
     switch (moveState) {
         case MoveState::FORWARD:
@@ -80,6 +83,7 @@ void MoveManager::updateState() {
 
 void MoveManager::updateState_INIT() {
     state = State::FOLLOW_HAND;
+    disablePid();
 }
 
 void MoveManager::updateState_TEST() {
@@ -130,15 +134,21 @@ void MoveManager::updateState_FOLLOW_HAND() {
 
     // Test: simulating Pid
 
-    int16_t centerX = (K230_data.x + K230_data.w) / 2;
-
-    int16_t err = K230_data.x - centerX;
-
-    if (err < 0) {
-        executeMove(MoveState::TURN_RIGHT, err * 10, 0);
-    } else
+    setLeftMotorPwm(0);
+    setRightMotorPwm(0);
+    if (K230_data.isNewCommand)
     {
-        executeMove(MoveState::TURN_LEFT, err * 10, 0);
+        int16_t err = (int16_t)K230_data.vision_error;
+        if (err < -10) {
+            setLeftMotorPwm(-1200);
+            setRightMotorPwm(1200);
+        } else if (err > 10)
+        {
+            setLeftMotorPwm(1200);
+            setRightMotorPwm(-1200);
+        }
+        K230_data.isNewCommand = 0;
+
     }
 
     return;

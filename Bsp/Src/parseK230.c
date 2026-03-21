@@ -78,6 +78,7 @@ void process_K230_Data(uint8_t *data, uint16_t len) {
         K230_data.h = atoi(sh);
 
         K230_data.vision_error = (float)((K230_data.x + K230_data.w/2) - 320);
+        K230_data.isNewCommand = 1;
 
     } else {
         return;
@@ -94,6 +95,8 @@ void parseK230Init(void)
 
     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, K230_data.RxBuffer, PTO_BUF_LEN_MAX);
     __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
+
+    K230_data.isNewCommand = 0;
 }
 
 void updateK230Data(UART_HandleTypeDef *huart, uint16_t Size)

@@ -6,6 +6,7 @@
 #define PARSEK230_H
 
 #include <stdint.h>
+#include <usart.h>
 
 #define PTO_BUF_LEN_MAX 50
 
@@ -17,6 +18,7 @@ typedef struct K230Data
     int16_t y;
     int16_t w;
     int16_t h;
+    uint8_t isNewCommand;
 } K230Data;
 
 extern volatile K230Data K230_data;
