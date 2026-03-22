@@ -49,6 +49,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         App/Src/StateFollowHand.cpp
         App/Inc/pid.h
         App/Src/pid.c
+        Bsp/Inc/parseBluetooth.h
+        Bsp/Src/parseBluetooth.c
+        App/Inc/StateBtControl.h
+        App/Src/StateBtControl.cpp
 )
 
 # Add STM32CubeMX generated sources

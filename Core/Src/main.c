@@ -32,6 +32,7 @@
 #include "../../Bsp/Inc/timer.h"
 #include "../../App/Inc/MoveManager_C.h"
 #include "../../Bsp/Inc/parseK230.h"
+#include "../../Bsp/Inc/parseBluetooth.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,15 +63,15 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int __io_putchar(int ch) {
-  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
-  return ch;
-}
-
-int _write(int file, char *ptr, int len) {
-  HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, 0xFFFF);
-  return len;
-}
+// int __io_putchar(int ch) {
+//   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+//   return ch;
+// }
+//
+// int _write(int file, char *ptr, int len) {
+//   HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, 0xFFFF);
+//   return len;
+// }
 
 /* USER CODE END 0 */
 
@@ -115,6 +116,7 @@ int main(void)
   MoveManager_Init();
 
   parseK230Init();
+  parseBluetoothInit();
 
   /* USER CODE END 2 */
 
@@ -126,12 +128,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if (timerMillis - last_tick >= 1000) {
-      printf("L\ndeg:%d\npwm:%d\nR\ndeg:%d\npwm:%d\n", (int32_t)leftMotorDeg, leftMotorPwm,
-        (int32_t)rightMotorDeg, rightMotorPwm);
-      // printf("target_center_x: %d\n", K230_data.x);
-      last_tick += 1000;
-    }
   }
   /* USER CODE END 3 */
 }
@@ -188,6 +184,10 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
   if (huart->Instance == USART1) {
     updateK230Data(huart, Size);
+  }
+  if (huart->Instance == USART2)
+  {
+    updateBluetoothData();
   }
 }
 

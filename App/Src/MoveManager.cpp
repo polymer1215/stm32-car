@@ -1,5 +1,6 @@
 #include "../Inc/MoveManager.h"
 #include "../../Bsp/Inc/timer.h"
+#include "../Inc/StateBtControl.h"
 
 #include "../Inc/StateTest.h"
 #include "../Inc/StateFollowHand.h"
@@ -9,7 +10,7 @@ public:
     StateInit(MoveManager* mgr) : BotState(mgr) {}
     void init() override {}
     void loop() override {
-        manager->changeState(State::TEST);
+        manager->changeState(State::BT_CONTROL);
     }
 };
 
@@ -20,6 +21,7 @@ MoveManager::MoveManager() {
     states[static_cast<int>(State::INIT)] = new StateInit(this);
     states[static_cast<int>(State::TEST)] = new StateTest(this);
     states[static_cast<int>(State::FOLLOW_HAND)] = new StateFollowHand(this);
+    states[static_cast<int>(State::BT_CONTROL)] = new StateBtControl(this);
 
     currentState = states[static_cast<int>(State::INIT)];
     

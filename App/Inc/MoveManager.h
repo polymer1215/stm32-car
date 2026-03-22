@@ -12,6 +12,7 @@ enum class State : uint8_t {
     INIT = 0,
     TEST,
     FOLLOW_HAND,
+    BT_CONTROL,
     COUNT
 };
 
@@ -53,6 +54,7 @@ private:
     friend class StateInit;
     friend class StateTest;
     friend class StateFollowHand;
+    friend class StateBtControl;
 };
 
 #endif //MOVEMANAGER_H
