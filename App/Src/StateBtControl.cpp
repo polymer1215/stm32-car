@@ -36,11 +36,15 @@ void StateBtControl::loop()
         } else if (strncmp((const char*)bluetooth_data.receivedData, "Y", 1) == 0)
         {
             move_state = MoveState::STOP;
+        } else if (strncmp((const char*)bluetooth_data.receivedData, "B", 1) == 0)
+        {
+            speed += 5;
+        } else if (strncmp((const char*)bluetooth_data.receivedData, "A", 1) == 0)
+        {
+            speed -= 5;
         }
-        // } else if (sscanf((const char*)bluetooth_data.receivedData, "Speed_%d", &speed) == 1)
-        // {
-        // }
         manager->executeMove(move_state, speed * 30, 0);
+        bluetooth_data.isNewCommand = 0;
     }
 
     if (speed < 10)
